@@ -173,6 +173,18 @@ impl DB {
             .execute(conn)
     }
 
+    fn count_admins(group: &Group) -> Result<i64, diesel::result::Error> {
+        println!("Count admins in group {group:?}");
+        let conn = &mut DB::connect();
+
+        use crate::schema::members::dsl::*;
+        members
+            .filter(group_id.eq(group.id))
+            .filter(urole.eq(Role::Admin))
+            .count()
+            .get_result(conn)
+    }
+
     fn set_santa(
         group: &Group,
         santa: &User,
