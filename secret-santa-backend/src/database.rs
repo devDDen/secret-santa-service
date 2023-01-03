@@ -34,7 +34,10 @@ impl Database {
 
         let user = DB::get_user(username)?;
         let group = DB::get_group(group_name)?;
-        DB::create_member(&user, &group, Role::Member)
+        match group.is_close {
+            true => Err(diesel::result::Error::NotFound),
+            false => DB::create_member(&user, &group, Role::Member),
+        }
     }
 }
 
