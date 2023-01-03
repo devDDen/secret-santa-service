@@ -1,0 +1,7 @@
+CREATE TABLE sgroups (
+	id INT GENERATED ALWAYS AS IDENTITY,
+	gname VARCHAR(50) NOT NULL,
+    is_close BOOLEAN DEFAULT FALSE NOT NULL,
+    CONSTRAINT unique_gname UNIQUE(gname),
+    CONSTRAINT sgroups_pkey PRIMARY KEY(id)
+);
