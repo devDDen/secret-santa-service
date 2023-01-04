@@ -163,6 +163,17 @@ impl DB {
             .execute(conn)
     }
 
+    fn get_member(user: &User, group: &Group) -> Result<Member, diesel::result::Error> {
+        println!("Try to find member {user:?} of group {group:?}");
+        let conn = &mut DB::connect();
+
+        use crate::schema::members::dsl::*;
+        members
+            .filter(user_id.eq(user.id))
+            .filter(group_id.eq(group.id))
+            .first(conn)
+    }
+
     fn update_member(member: Member) -> Result<usize, diesel::result::Error> {
         println!("Update member with id {} to {:?}", member.id, member);
         let conn = &mut DB::connect();
