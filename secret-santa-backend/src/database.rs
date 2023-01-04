@@ -130,7 +130,7 @@ impl DB {
         let conn = &mut DB::connect();
 
         use crate::schema::sgroups::dsl::*;
-        sgroups.filter(gname.eq(group_name)).first(conn)
+        sgroups.filter(gname.eq(group_name)).first(conn) 
     }
 
     fn get_groups() -> Result<Vec<Group>, diesel::result::Error> {
