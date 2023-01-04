@@ -39,6 +39,25 @@ impl Database {
             false => DB::create_member(&user, &group, Role::Member),
         }
     }
+    
+    pub fn delete_group_by_admin(
+        &self,
+        username: &str,
+        group_name: &str
+    ) -> Result<usize, diesel::result::Error> {
+        println!("Deleting group {group_name} by Admin");
+
+        let user = DB::get_user(username)?;
+        let group = DB::get_group(group_name)?;
+        let member = DB::get_member(&user, &group)?;
+        match member.urole.eq(&Role::Admin) {
+            true => {
+                let group_for_delete = DB::get_group(group_name)?;
+                DB::delete_group(group_for_delete)
+            }
+            false => Err(diesel::result::Error::NotFound)
+        }
+    }
 }
 
 struct DB;
@@ -85,15 +104,14 @@ impl DB {
         use crate::schema::users::dsl::users;
         users.load(conn)
     }
-
-    fn delete_user(user: User) {
+    
+    fn delete_user(user: User)-> Result<usize, diesel::result::Error> {
         println!("Delete user {user:?}");
         let conn = &mut DB::connect();
 
         use crate::schema::users::dsl::*;
         diesel::delete(users.filter(id.eq(user.id)))
             .execute(conn)
-            .expect("Error deleting user");
     }
 
     fn create_group(group_name: &str) -> Result<usize, diesel::result::Error> {
@@ -133,14 +151,13 @@ impl DB {
             .execute(conn)
     }
 
-    fn delete_group(group: Group) {
+   fn delete_group(group: Group)-> Result<usize, diesel::result::Error> {
         println!("Delete group {group:?}");
         let conn = &mut DB::connect();
 
         use crate::schema::sgroups::dsl::*;
         diesel::delete(sgroups.filter(id.eq(group.id)))
             .execute(conn)
-            .expect("Error deleting group");
     }
 
     fn create_member(
