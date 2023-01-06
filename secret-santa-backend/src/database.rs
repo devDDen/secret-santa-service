@@ -90,14 +90,13 @@ impl DB {
         users.load(conn)
     }
 
-    fn delete_user(user: User) {
+    fn delete_user(user: User) -> Result<usize, diesel::result::Error> {
         log::debug!("Delete user {user:?}");
         let conn = &mut DB::connect();
 
         use crate::schema::users::dsl::*;
         diesel::delete(users.filter(id.eq(user.id)))
             .execute(conn)
-            .expect("Error deleting user");
     }
 
     fn create_group(group_name: &str) -> Result<usize, diesel::result::Error> {
