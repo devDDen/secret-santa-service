@@ -4,6 +4,7 @@ use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
 use std::env;
 use tide::log;
+
 #[derive(Clone)]
 pub struct Database;
 impl Database {
