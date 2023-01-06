@@ -80,17 +80,6 @@ pub struct Member {
     pub urole: Role,
 }
 
-impl Member {
-    fn set_role(self, new_role: Role) {
-        Self {
-            id: self.id;
-            user_ud: self.user_id;
-            group_id: self.group_id;
-            urole: new_role;
-        }
-    }
-}
-
 #[derive(Insertable)]
 #[table_name = "santas"]
 pub struct NewSanta {
