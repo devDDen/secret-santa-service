@@ -45,7 +45,7 @@ struct DB;
 
 impl DB {
     fn connect() -> PgConnection {
-        log::debug!("connect enter point");
+        log::debug!("Connect enter point");
         dotenv().ok();
         let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         log::debug!("connection established");
@@ -160,7 +160,7 @@ impl DB {
             group_id: group.id,
             urole: role,
         };
-        log::debug!("new group member created");
+        log::debug!("New group member created");
         use crate::schema::members::dsl::*;
         diesel::insert_into(members)
             .values(new_group_member)
@@ -213,7 +213,7 @@ impl DB {
             santa_id: santa.id,
             recipient_id: recipient.id,
         };
-        log::debug!("new santa created");
+        log::debug!("New santa created");
         use crate::schema::santas::dsl::*;
         diesel::insert_into(santas).values(new_santa).execute(conn)
     }
