@@ -40,6 +40,52 @@ impl Database {
             false => DB::create_member(&user, &group, Role::Member),
         }
     }
+
+    pub fn delete_group_by_admin(
+        &self,
+        username: &str,
+        group_name: &str
+    ) -> Result<usize, diesel::result::Error> {
+        log::debug!("Deleting group {group_name} by Admin");
+
+        let user = DB::get_user(username)?;
+        let group = DB::get_group(group_name)?;
+        let member = DB::get_member(&user, &group)?;
+        match member.urole.eq(&Role::Admin) {
+            true => {
+                let group_for_delete = DB::get_group(group_name)?;
+                DB::delete_group(group_for_delete)
+            }
+            false => Err(diesel::result::Error::NotFound)
+        }
+    }
+
+    pub fn get_group_members(
+        &self,
+        username: &str,
+        group_name: &str,
+    ) -> Result<Vec<String>, diesel::result::Error> {
+        log::debug!("Getting members of group {group_name} by user {username}");
+
+        let user = DB::get_user(username)?;
+        let group = DB::get_group(group_name)?;
+        let member = DB::get_member(&user, &group)?;
+
+        match member.urole {
+            Role::Admin => {
+                let members = DB::get_members(&group)?;
+
+                let mut users = vec![];
+                for member in members {
+                    let user = DB::get_user_by_id(member.user_id)?;
+                    users.push(user.name);
+                }
+
+                Ok(users)
+            }
+            Role::Member => Err(diesel::result::Error::NotFound)
+        }
+    }
 }
 
 struct DB;
@@ -81,6 +127,16 @@ impl DB {
 
         use crate::schema::users::dsl::*;
         users.filter(name.eq(username)).first(conn)
+    }
+
+    fn get_user_by_id(user_id: i32) -> Result<User, diesel::result::Error> {
+        log::debug!("Try to find user by id {user_id}");
+        let conn = &mut DB::connect();
+
+        use crate::schema::users::dsl::*;
+        users
+            .filter(id.eq(user_id))
+            .first(conn)
     }
 
     fn get_users() -> Result<Vec<User>, diesel::result::Error> {
@@ -152,7 +208,6 @@ impl DB {
         role: Role,
     ) -> Result<usize, diesel::result::Error> {
         log::debug!("Add member {user:?} to group {group:?}");
-
         let conn = &mut DB::connect();
 
         let new_group_member = NewMember {
@@ -176,6 +231,16 @@ impl DB {
             .filter(user_id.eq(user.id))
             .filter(group_id.eq(group.id))
             .first(conn)
+    }
+
+    fn get_members(group: &Group) -> Result<Vec<Member>, diesel::result::Error> {
+        log::debug!("Get members of group {group:?}");
+        let conn = &mut DB::connect();
+
+        use crate::schema::members::dsl::*;
+        members
+            .filter(group_id.eq(group.id))
+            .load(conn)
     }
 
     fn update_member(member: Member) -> Result<usize, diesel::result::Error> {
