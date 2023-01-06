@@ -136,14 +136,13 @@ impl DB {
             .execute(conn)
     }
 
-    fn delete_group(group: Group) {
+    fn delete_group(group: Group) -> Result<usize, diesel::result::Error> {
         log::debug!("Delete group {group:?}");
         let conn = &mut DB::connect();
 
         use crate::schema::sgroups::dsl::*;
         diesel::delete(sgroups.filter(id.eq(group.id)))
             .execute(conn)
-            .expect("Error deleting group");
     }
 
     fn create_member(
