@@ -42,15 +42,15 @@ impl Database {
 
     pub fn get_recipient_name(
         &self,
-        username: &str,
+        santa_name: &str,
         group_name: &str,
-    ) -> Result<User, diesel::result::Error> {
-        println!("Getting recipient for santa {username} in group {group_name}");
+    ) -> Result<String, diesel::result::Error> {
+        println!("Getting recipient for santa {santa_name} in group {group_name}");
 
-        let user = DB::get_user(username)?;
+        let santa = DB::get_user(santa_name)?;
         let group = DB::get_group(group_name)?;
         match group.is_close {
-            true => DB::get_santa_recipient(&group, &user),
+            true => DB::get_santa_recipient(&group, &santa),
             false => Err(diesel::result::Error::NotFound),
         }
     }
