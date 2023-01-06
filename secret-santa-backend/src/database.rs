@@ -28,7 +28,7 @@ impl Database {
     pub fn add_user_to_group(
         &self,
         username: &str,
-        group_name: &str,
+        group_name: &str
     ) -> Result<usize, diesel::result::Error> {
         println!("Adding user {username} to group {group_name}");
 
@@ -37,6 +37,27 @@ impl Database {
         match group.is_close {
             true => Err(diesel::result::Error::NotFound),
             false => DB::create_member(&user, &group, Role::Member),
+        }
+    }
+
+    pub fn add_admin_to_group(
+        &self,
+        setter: &str,
+        username: &str,
+        group_name: &str
+    ) -> Result<usize, diesel::result::Error> {
+        println!("Creating user {username} as admin in group {group_name}");
+        let group = DB::get_group(group_name)?;
+        let user_setter = DB::get_user(setter)?;
+        let setter_member = DB::get_member(&user_setter, &group)?;
+        match setter_member.urole.eq(&Role::Admin) {
+            true => {
+                let user_new_admin = DB::get_user(username)?;
+                let new_admin_member = DB::get_member(&user_new_admin, &group)?;
+                let changed_member = new_admin_member.set_role(Role::Admin);
+                DB::update_member(changed_member) 
+            }
+            false => Err(diesel::result::Error::NotFound)
         }
     }
     
