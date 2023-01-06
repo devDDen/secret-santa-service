@@ -2,5 +2,5 @@ CREATE TABLE users (
 	id INT GENERATED ALWAYS AS IDENTITY,
 	name VARCHAR(50) NOT NULL,
 	CONSTRAINT unique_name UNIQUE(name),
-    CONSTRAINT users_pkey PRIMARY KEY(id)
+	CONSTRAINT users_pkey PRIMARY KEY(id)
 );
