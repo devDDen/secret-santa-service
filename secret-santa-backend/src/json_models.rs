@@ -17,4 +17,3 @@ pub struct NewAdminUserGroupName {
     pub group_name: String,
     pub setter: String,
 }
-
