@@ -36,6 +36,24 @@ impl Database {
         let group = DB::get_group(group_name)?;
         DB::create_member(&user, &group, Role::Member)
     }
+    pub fn add_admin_to_group(
+        &self,
+        setter: &str,
+        new_admin: &str,
+        group_name: &str,
+    ) -> Result<usize, diesel:result:Error> {
+        println!("Creating user {username} as admin in group {group_name}");
+        let user = DB::get_user(new_admin)?;
+        let setter_user = DB::get_user(setter)?;
+        
+        let group = DB::get_group(group_name)?;
+        let member = Member {
+            user_id: user.id,
+            group_id: group.id,
+            urole: Role::Admin,
+        };
+        DB::update_member(member)
+    }
 }
 
 struct DB;

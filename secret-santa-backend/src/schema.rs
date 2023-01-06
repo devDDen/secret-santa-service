@@ -35,4 +35,9 @@ diesel::table! {
 
 diesel::joinable!(members -> users (user_id));
 
-diesel::allow_tables_to_appear_in_same_query!(members, santas, sgroups, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    members,
+    santas,
+    sgroups,
+    users,
+);
