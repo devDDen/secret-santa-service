@@ -59,33 +59,31 @@ impl Database {
         }
     }
 
-    pub fn is_user_admin(
+    pub fn get_group_members(
         &self,
         username: &str,
         group_name: &str,
-    ) -> Result<bool, diesel::result::Error> {
-        println!("Cheking if user {username} is Admin in group {group_name}");
+    ) -> Result<Vec<String>, diesel::result::Error> {
+        println!("Getting members of group {group_name} by user {username}");
 
         let user = DB::get_user(username)?;
         let group = DB::get_group(group_name)?;
         let member = DB::get_member(&user, &group)?;
 
-        Ok(member.urole == Role::Admin)
-    }
+        match member.urole {
+            Role::Admin => {
+                let members = DB::get_members(&group)?;
 
-    pub fn get_group_members(
-        &self,
-        group_name: &str,
-    ) -> Result<Vec<String>, diesel::result::Error> {
-        let group = DB::get_group(group_name)?;
-        let members = DB::get_members(&group)?;
+                let mut users = vec![];
+                for member in members {
+                    let user = DB::get_user_by_id(member.user_id)?;
+                    users.push(user.name);
+                }
 
-        let mut users = vec![];
-        for member in members {
-            let user = DB::get_user_by_id(member.user_id)?;
-            users.push(user.name);
+                Ok(users)
+            }
+            Role::Member => Err(diesel::result::Error::NotFound)
         }
-        Ok(users)
     }
 }
 

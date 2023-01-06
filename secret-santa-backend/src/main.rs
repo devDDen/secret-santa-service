@@ -108,20 +108,8 @@ fn main() -> Result<(), std::io::Error> {
                 let state = request.state();
                 let guard = state.lock().unwrap();
 
-                match guard.is_user_admin(username.as_str(), group_name.as_str()) {
-                    Ok(true) => {
-                        match guard.get_group_members(group_name.as_str()) {
-                            Ok(list) => Ok(json!(&list)),
-                            Err(e) => Err(tide::Error::from_str(
-                                tide::StatusCode::Conflict,
-                                json!(e.to_string())
-                            )),
-                        }
-                    }
-                    Ok(false) => Err(tide::Error::from_str(
-                        tide::StatusCode::Forbidden,
-                        json!("Forbidden".to_string())
-                    )),
+                match guard.get_group_members(username.as_str(), group_name.as_str()) {
+                    Ok(list) => Ok(json!(&list)),
                     Err(e) => Err(tide::Error::from_str(
                         tide::StatusCode::Conflict,
                         json!(e.to_string())
