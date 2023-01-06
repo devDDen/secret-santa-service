@@ -39,6 +39,21 @@ impl Database {
             false => DB::create_member(&user, &group, Role::Member),
         }
     }
+
+    pub fn get_recipient_name(
+        &self,
+        username: &str,
+        group_name: &str,
+    ) -> Result<User, diesel::result::Error> {
+        println!("Getting recipient for santa {username} in group {group_name}");
+
+        let user = DB::get_user(username)?;
+        let group = DB::get_group(group_name)?;
+        match group.is_close {
+            true => DB::get_santa_recipient(&group, &user),
+            false => Err(diesel::result::Error::NotFound),
+        }
+    }
 }
 
 struct DB;
