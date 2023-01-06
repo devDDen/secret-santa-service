@@ -11,7 +11,7 @@ use tide::Request;
 
 fn main() -> Result<(), std::io::Error> {
     let version: &'static str = env!("CARGO_PKG_VERSION");
-
+    tide::log::start();
     let f = async {
         let database = Database;
         let state = Arc::new(Mutex::new(database));
