@@ -105,7 +105,7 @@ impl DB {
         users.load(conn)
     }
 
-    fn delete_user(user: User)-> Result<usize, diesel::result::Error> {
+    fn delete_user(user: User) -> Result<usize, diesel::result::Error> {
         println!("Delete user {user:?}");
         let conn = &mut DB::connect();
 
@@ -151,7 +151,7 @@ impl DB {
             .execute(conn)
     }
 
-   fn delete_group(group: Group)-> Result<usize, diesel::result::Error> {
+   fn delete_group(group: Group) -> Result<usize, diesel::result::Error> {
         println!("Delete group {group:?}");
         let conn = &mut DB::connect();
 
