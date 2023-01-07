@@ -1,5 +1,4 @@
 use crate::models::{User, NewUser, Group, NewGroup, Member, NewMember, Role, Santa, NewSanta};
-use crate::schema::sgroups::is_close;
 use diesel::prelude::*;
 use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
@@ -305,7 +304,7 @@ impl DB {
         log::debug!("Get all groups");
         let conn = &mut DB::connect();
 
-        use crate::schema::sgroups::dsl::sgroups;
+        use crate::schema::sgroups::dsl::*;
         sgroups.filter(is_close.eq(false)).load(conn)
     }
 
