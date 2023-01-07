@@ -135,7 +135,7 @@ impl Database {
 
                 let mut users = vec![];
                 for member in members {
-                    let user = DB::get_user_by_id(member.user_id)?;
+                    let user = DB::get_user_from_member(&member)?;
                     users.push(user.name);
                 }
 
@@ -206,16 +206,6 @@ impl DB {
 
         use crate::schema::users::dsl::*;
         users.filter(name.eq(username)).first(conn)
-    }
-
-    fn get_user_by_id(user_id: i32) -> Result<User, diesel::result::Error> {
-        log::debug!("Try to find user by id {user_id}");
-        let conn = &mut DB::connect();
-
-        use crate::schema::users::dsl::*;
-        users
-            .filter(id.eq(user_id))
-            .first(conn)
     }
 
     fn get_users() -> Result<Vec<User>, diesel::result::Error> {
