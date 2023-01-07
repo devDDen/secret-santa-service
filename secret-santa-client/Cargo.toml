@@ -1,0 +1,11 @@
+[package]
+name = "secret-santa-client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ureq = { version = "*", features = ["json", "charset"] }
+serde_json = "*"
+clap = {version = "4.0.17", features = ["derive"]}
