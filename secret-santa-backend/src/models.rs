@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use diesel::sql_types::Integer;
 use diesel::{AsChangeset, AsExpression, FromSqlRow, Queryable};
 use diesel_enum::DbEnum;
+use serde::Serialize;
 
 #[derive(Insertable)]
 #[table_name = "users"]
@@ -10,7 +11,7 @@ pub struct NewUser<'a> {
     pub name: &'a str,
 }
 
-#[derive(Debug, Queryable, AsChangeset)]
+#[derive(Debug, Queryable, AsChangeset, Serialize)]
 #[table_name = "users"]
 pub struct User {
     pub id: i32,
@@ -23,7 +24,7 @@ pub struct NewGroup<'a> {
     pub gname: &'a str,
 }
 
-#[derive(Debug, Queryable, AsChangeset)]
+#[derive(Debug, Queryable, AsChangeset, Serialize)]
 #[table_name = "sgroups"]
 pub struct Group {
     pub id: i32,
