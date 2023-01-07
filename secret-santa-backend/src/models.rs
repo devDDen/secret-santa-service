@@ -6,26 +6,26 @@ use diesel_enum::DbEnum;
 use serde::Serialize;
 
 #[derive(Insertable)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct NewUser<'a> {
     pub name: &'a str,
 }
 
 #[derive(Debug, Queryable, AsChangeset, Serialize)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct User {
     pub id: i32,
     pub name: String,
 }
 
 #[derive(Insertable)]
-#[table_name = "sgroups"]
+#[diesel(table_name = sgroups)]
 pub struct NewGroup<'a> {
     pub gname: &'a str,
 }
 
 #[derive(Debug, Queryable, AsChangeset, Serialize)]
-#[table_name = "sgroups"]
+#[diesel(table_name = sgroups)]
 pub struct Group {
     pub id: i32,
     pub gname: String,
@@ -65,7 +65,7 @@ pub enum Role {
 }
 
 #[derive(Insertable)]
-#[table_name = "members"]
+#[diesel(table_name = members)]
 pub struct NewMember {
     pub user_id: i32,
     pub group_id: i32,
@@ -73,7 +73,7 @@ pub struct NewMember {
 }
 
 #[derive(Debug, Queryable, AsChangeset)]
-#[table_name = "members"]
+#[diesel(table_name = members)]
 pub struct Member {
     pub id: i32,
     pub user_id: i32,
@@ -93,7 +93,7 @@ impl Member {
 }
 
 #[derive(Insertable)]
-#[table_name = "santas"]
+#[diesel(table_name = santas)]
 pub struct NewSanta {
     pub group_id: i32,
     pub santa_id: i32,
@@ -101,7 +101,7 @@ pub struct NewSanta {
 }
 
 #[derive(Debug, Queryable, AsChangeset)]
-#[table_name = "santas"]
+#[diesel(table_name = santas)]
 pub struct Santa {
     pub id: i32,
     pub group_id: i32,

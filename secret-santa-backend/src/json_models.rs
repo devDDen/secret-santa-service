@@ -12,7 +12,7 @@ pub struct UserGroupName {
 }
 
 #[derive(Deserialize)]
-pub struct NewAdminUserGroupName {
+pub struct UserGroupNewAdminName {
     pub username: String,
     pub group_name: String,
     pub new_admin: String,
