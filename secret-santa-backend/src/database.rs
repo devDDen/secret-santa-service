@@ -1,4 +1,4 @@
-use crate::models::{User, NewUser, Group, NewGroup, Member, NewMember, Role, Santa, NewSanta};
+use crate::models::{User, NewUser, Group, NewGroup, Member, NewMember, Role, NewSanta};
 use diesel::prelude::*;
 use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
@@ -11,8 +11,8 @@ use rand::thread_rng;
 pub struct Database;
 impl Database {
     pub fn create_user(&self, username: &str) -> Result<(), diesel::result::Error> {
-      let mut db = DB::connect();  
-      db.create_user(username)?;
+        let mut db = DB::connect();  
+        db.create_user(username)?;
         Ok(())
     }
 
@@ -117,10 +117,8 @@ impl Database {
             let cur_recipient = db.get_user_from_member(members.get(i + 1).unwrap())?;
             db.set_santa(&group, &cur_santa, &cur_recipient)?;            
         }
-
         group.is_close = true;
         db.update_group(&group)?;
-
         Ok(())
     }
 
@@ -151,7 +149,34 @@ impl Database {
             Role::Member => Err(diesel::result::Error::NotFound)
         }
     }
-    
+
+    pub fn revoke_rights_of_admin(
+        &self,
+        username: &str,
+        group_name: &str
+    ) -> Result<(), diesel::result::Error> {
+        log::debug!("Try to revoke rights by Admin of group {group_name}");
+
+        let mut db = DB::connect();
+        let user = db.get_user(username)?;
+        let group = db.get_group(group_name)?;
+        let member = db.get_member(&user, &group)?;
+        match member.urole.eq(&Role::Admin) {
+            true => {
+                let number_of_admins = db.count_admins(&group)?;
+                if number_of_admins > 1 {
+                    let changed_member = member.set_role(Role::Member);
+                    db.update_member(changed_member)?;
+                    Ok(())
+                }
+                else {
+                    Err(diesel::result::Error::NotFound)
+                }
+            }
+            false => Err(diesel::result::Error::NotFound)
+        }
+    }
+
     pub fn add_admin_to_group(
         &self,
         username: &str,
@@ -159,10 +184,12 @@ impl Database {
         group_name: &str
     ) -> Result<usize, diesel::result::Error> {
         log::debug!("Creating user {new_admin} as admin in group {group_name}");
+
         let mut db = DB::connect();
         let group = db.get_group(group_name)?;
         let user_setter = db.get_user(username)?;
         let setter_member = db.get_member(&user_setter, &group)?;
+
         match setter_member.urole.eq(&Role::Admin) {
             true => {
                 let user_new_admin = db.get_user(new_admin)?;
@@ -172,12 +199,18 @@ impl Database {
             }
             false => Err(diesel::result::Error::NotFound)
         }
-    } 
-} 
+    }
 
-struct DB
-{
-  conn: PgConnection
+    pub fn get_open_groups(&self) -> Result<Vec<Group>, diesel::result::Error> {
+        log::debug!("Getting list of opened groups");
+
+        let mut db = DB::connect();
+        db.get_open_groups()
+    }
+}
+
+struct DB {
+    conn: PgConnection
 }
 
 impl DB {
@@ -187,8 +220,8 @@ impl DB {
         let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         log::debug!("connection established");
         Self {
-        conn: PgConnection::establish(&database_url)
-            .expect(&format!("Error connecting to {}", &database_url))
+            conn: PgConnection::establish(&database_url)
+                .expect(&format!("Error connecting to {}", &database_url))
         }
     }
 
@@ -201,36 +234,11 @@ impl DB {
         diesel::insert_into(users).values(&new_user).execute(&mut self.conn)
     }
 
-     fn update_user(&mut self, user: &User) -> Result<usize, diesel::result::Error> {
-        log::debug!("Update user with id {} to {:?}", user.id, user);
-
-        use crate::schema::users::dsl::*;
-        log::debug!("User info updated");
-        diesel::update(users.filter(id.eq(user.id)))
-            .set(user)
-            .execute(&mut self.conn)
-    }
-
-     fn get_user(&mut self, username: &str) -> Result<User, diesel::result::Error> {
+    fn get_user(&mut self, username: &str) -> Result<User, diesel::result::Error> {
         log::debug!("Try to find user {username}");
 
         use crate::schema::users::dsl::*;
         users.filter(name.eq(username)).first(&mut self.conn)
-    }
-
-    fn get_users(&mut self) -> Result<Vec<User>, diesel::result::Error> {
-        log::debug!("Get all users");
-
-        use crate::schema::users::dsl::users;
-        users.load(&mut self.conn)
-    }
-
-    fn delete_user(&mut self, user: User) -> Result<usize, diesel::result::Error> {
-        log::debug!("Delete user {user:?}");
-
-        use crate::schema::users::dsl::*;
-        diesel::delete(users.filter(id.eq(user.id)))
-            .execute(&mut self.conn)
     }
 
     fn create_group(&mut self, group_name: &str) -> Result<usize, diesel::result::Error> {
@@ -250,11 +258,11 @@ impl DB {
         sgroups.filter(gname.eq(group_name)).first(&mut self.conn)
     }
 
-    fn get_groups(&mut self) -> Result<Vec<Group>, diesel::result::Error> {
+    fn get_open_groups(&mut self) -> Result<Vec<Group>, diesel::result::Error> {
         log::debug!("Get all groups");
 
-        use crate::schema::sgroups::dsl::sgroups;
-        sgroups.load(&mut self.conn)
+        use crate::schema::sgroups::dsl::*;
+        sgroups.filter(is_close.eq(false)).load(&mut self.conn)
     }
 
     fn update_group(&mut self, group: &Group) -> Result<usize, diesel::result::Error> {
@@ -324,7 +332,6 @@ impl DB {
 
     fn count_admins(&mut self, group: &Group) -> Result<i64, diesel::result::Error> {
         log::debug!("Count admins in group {group:?}");
-        let conn = &mut DB::connect();
 
         use crate::schema::members::dsl::*;
         members
@@ -336,7 +343,6 @@ impl DB {
 
     fn get_user_from_member(&mut self, member: &Member) -> Result<User, diesel::result::Error> {
         log::debug!("Try to find user from member {member:?}");
-        let conn = &mut DB::connect();
 
         use crate::schema::users::dsl::*;
         users
