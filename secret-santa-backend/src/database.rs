@@ -16,7 +16,7 @@ impl Database {
         Ok(())
     }
 
-     pub fn create_group_by_user(
+    pub fn create_group_by_user(
         &self,
         username: &str,
         group_name: &str,
