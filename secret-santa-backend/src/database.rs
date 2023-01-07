@@ -66,7 +66,7 @@ impl Database {
         &self,
         username: &str,
         group_name: &str,
-    ) -> Result<usize, diesel::result::Error> {
+    ) -> Result<(), diesel::result::Error> {
         println!("Try to start secret Santa by {username} in group {group_name}");
 
         let user = DB::get_user(username)?;
@@ -97,7 +97,7 @@ impl Database {
         group.is_close = true;
         DB::update_group(&group)?;
 
-        Ok(0)
+        Ok(())
     }
 
     pub fn get_group_members(
