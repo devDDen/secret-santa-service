@@ -46,13 +46,18 @@ impl Database {
         santa_name: &str,
         group_name: &str,
     ) -> Result<String, diesel::result::Error> {
-        println!("Getting recipient for santa {santa_name} in group {group_name}");
+        log::debug!("Getting recipient for santa {santa_name} in group {group_name}");
 
         let santa = DB::get_user(santa_name)?;
         let group = DB::get_group(group_name)?;
         match group.is_close {
-            true => DB::get_santa_recipient(&group, &santa),
-            false => Err(diesel::result::Error::NotFound),
+            true => {
+                let recipient = DB::get_santa_recipient(&group, &santa)?;
+                Ok(recipient.name)
+            }
+            false => Err(diesel::result::Error::NotFound)
+        }
+    }
 
     pub fn delete_group_by_admin(
         &self,
