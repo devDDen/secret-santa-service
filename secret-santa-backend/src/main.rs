@@ -109,7 +109,27 @@ fn main() -> Result<(), std::io::Error> {
                 let guard = state.lock().unwrap();
 
                 match guard.get_group_members(username.as_str(), group_name.as_str()) {
-                    Ok(list) => Ok(json!(&list)),
+                    Ok(list) => Ok(json!({group_name: list})),
+                    Err(e) => Err(tide::Error::from_str(
+                        tide::StatusCode::Conflict,
+                        json!(e.to_string())
+                    )),
+                }
+            });
+        app.at("/get-recipient-name")
+            .get(|mut request: Request<Arc<Mutex<Database>>>| async move {
+                let UserGroupName {
+                    username,
+                    group_name,
+                } = request.body_json().await.map_err(|e| {
+                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
+                })?;
+
+                let state = request.state();
+                let guard = state.lock().unwrap();
+
+                match guard.get_recipient_name(username.as_str(), group_name.as_str()) {
+                    Ok(result) => Ok(json!({"recipient": result})),
                     Err(e) => Err(tide::Error::from_str(
                         tide::StatusCode::Conflict,
                         json!(e.to_string())
