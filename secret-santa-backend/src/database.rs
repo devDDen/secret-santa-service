@@ -102,7 +102,7 @@ impl Database {
         }
 
         let mut members = db.get_members(&group)?;
-        if members.len() < 2 {
+        if members.len() < 3 {
             return Err(diesel::result::Error::NotFound);
         }
         let mut rng = thread_rng();
