@@ -184,7 +184,9 @@ fn main() -> Result<(), std::io::Error> {
                 let guard = state.lock().unwrap();
 
                 match guard.get_groups() {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
+                    Ok(v) => Ok(json!({
+                        "groups": v,
+                        })),   
                     Err(e) => Err(tide::Error::from_str(
                         tide::StatusCode::Conflict,
                         json!(e.to_string()),
@@ -192,7 +194,7 @@ fn main() -> Result<(), std::io::Error> {
                 }
             });
 
-        app.listen("127.0.0.1:8080").await
+        app.listen("127.0.0.1:80").await
 
     };
     futures::executor::block_on(f)

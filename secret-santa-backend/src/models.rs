@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use diesel::sql_types::Integer;
 use diesel::{AsChangeset, AsExpression, FromSqlRow, Queryable};
 use diesel_enum::DbEnum;
+use serde::Serialize;
 
 #[derive(Insertable)]
 #[table_name = "users"]

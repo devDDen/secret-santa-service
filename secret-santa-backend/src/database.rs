@@ -1,4 +1,5 @@
 use crate::models::{User, NewUser, Group, NewGroup, Member, NewMember, Role, Santa, NewSanta};
+use crate::schema::sgroups::is_close;
 use diesel::prelude::*;
 use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
@@ -166,7 +167,7 @@ impl Database {
         }
     }
 
-    pub fn get_groups(&self) {
+    pub fn get_groups(&self) -> Result<Vec<Group>, diesel::result::Error> {
         log::debug!("Getting list of opened groups");
 
         DB::get_groups()
