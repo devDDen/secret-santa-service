@@ -165,6 +165,12 @@ impl Database {
             false => Err(diesel::result::Error::NotFound)
         }
     }
+
+    pub fn get_groups(&self) {
+        log::debug!("Getting list of opened groups");
+
+        DB::get_groups()
+    }
 }
 
 struct DB;
@@ -249,7 +255,7 @@ impl DB {
         let conn = &mut DB::connect();
 
         use crate::schema::sgroups::dsl::sgroups;
-        sgroups.load(conn)
+        sgroups.filter(is_close.eq(false)).load(conn)
     }
 
     fn update_group(group: &Group) -> Result<usize, diesel::result::Error> {

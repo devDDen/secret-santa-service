@@ -10,7 +10,7 @@ pub struct NewUser<'a> {
     pub name: &'a str,
 }
 
-#[derive(Debug, Queryable, AsChangeset)]
+#[derive(Debug, Queryable, AsChangeset, Serialize)]
 #[table_name = "users"]
 pub struct User {
     pub id: i32,
@@ -23,7 +23,7 @@ pub struct NewGroup<'a> {
     pub gname: &'a str,
 }
 
-#[derive(Debug, Queryable, AsChangeset)]
+#[derive(Debug, Queryable, AsChangeset, Serialize)]
 #[table_name = "sgroups"]
 pub struct Group {
     pub id: i32,

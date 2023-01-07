@@ -178,6 +178,20 @@ fn main() -> Result<(), std::io::Error> {
                 }
             });
 
+        app.at("/get-groups")
+            .post(|request: Request<Arc<Mutex<Database>>>| async move {
+                let state = request.state();
+                let guard = state.lock().unwrap();
+
+                match guard.get_groups() {
+                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
+                    Err(e) => Err(tide::Error::from_str(
+                        tide::StatusCode::Conflict,
+                        json!(e.to_string()),
+                    )),
+                }
+            });
+
         app.listen("127.0.0.1:8080").await
 
     };
