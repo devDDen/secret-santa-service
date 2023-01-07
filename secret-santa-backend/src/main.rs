@@ -179,11 +179,11 @@ fn main() -> Result<(), std::io::Error> {
             });
 
         app.at("/get-groups")
-            .post(|request: Request<Arc<Mutex<Database>>>| async move {
+            .get(|request: Request<Arc<Mutex<Database>>>| async move {
                 let state = request.state();
                 let guard = state.lock().unwrap();
 
-                match guard.get_groups() {
+                match guard.get_open_groups() {
                     Ok(v) => Ok(json!({
                         "groups": v,
                         })),   

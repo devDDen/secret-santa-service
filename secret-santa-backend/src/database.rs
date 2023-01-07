@@ -167,7 +167,7 @@ impl Database {
         }
     }
 
-    pub fn get_groups(&self) -> Result<Vec<Group>, diesel::result::Error> {
+    pub fn get_open_groups(&self) -> Result<Vec<Group>, diesel::result::Error> {
         log::debug!("Getting list of opened groups");
 
         DB::get_groups()
