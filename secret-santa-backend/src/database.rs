@@ -129,17 +129,17 @@ impl Database {
     
     pub fn add_admin_to_group(
         &self,
-        setter: &str,
         username: &str,
+        new_admin: &str,
         group_name: &str
     ) -> Result<usize, diesel::result::Error> {
-        println!("Creating user {username} as admin in group {group_name}");
+        log::debug!("Creating user {new_admin} as admin in group {group_name}");
         let group = DB::get_group(group_name)?;
-        let user_setter = DB::get_user(setter)?;
+        let user_setter = DB::get_user(username)?;
         let setter_member = DB::get_member(&user_setter, &group)?;
         match setter_member.urole.eq(&Role::Admin) {
             true => {
-                let user_new_admin = DB::get_user(username)?;
+                let user_new_admin = DB::get_user(new_admin)?;
                 let new_admin_member = DB::get_member(&user_new_admin, &group)?;
                 let changed_member = new_admin_member.set_role(Role::Admin);
                 DB::update_member(changed_member) 

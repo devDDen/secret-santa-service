@@ -116,31 +116,27 @@ fn main() -> Result<(), std::io::Error> {
                     )),
                 }
             });
-<<<<<<< HEAD
-	        app.at("/add-admin")
-             .post(|mut request: Request<Arc<Mutex<Database>>>| async move {
-                 let NewAdminUserGroupName {
-                     username,
-                     group_name,
-                     setter,
-                 } = request.body_json().await.map_err(|e| {
-                     tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                 })?;
- 
-                 let state = request.state();
-                 let guard = state.lock().unwrap();
- 
-                 match guard.add_admin_to_group(setter.as_str(),username.as_str(), group_name.as_str()) {
-                     Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                     Err(e) => Err(tide::Error::from_str(
-                         tide::StatusCode::Conflict,
-                         json!(e.to_string()),
-                     )),
-                 }
-             });
-        app.listen("127.0.0.1:80").await
-=======
+        app.at("/add-admin")
+            .post(|mut request: Request<Arc<Mutex<Database>>>| async move {
+                let NewAdminUserGroupName {
+                    username,
+                    group_name,
+                    new_admin,
+                } = request.body_json().await.map_err(|e| {
+                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
+                })?;
 
+                let state = request.state();
+                let guard = state.lock().unwrap();
+
+                match guard.add_admin_to_group(username.as_str(), new_admin.as_str(), group_name.as_str()) {
+                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
+                    Err(e) => Err(tide::Error::from_str(
+                        tide::StatusCode::Conflict,
+                        json!(e.to_string()),
+                    )),
+                }
+            });
         app.at("/start-secret-santa")
             .post(|mut request: Request<Arc<Mutex<Database>>>| async move {
                 let UserGroupName {
@@ -163,7 +159,7 @@ fn main() -> Result<(), std::io::Error> {
             });
 
         app.listen("127.0.0.1:8080").await
->>>>>>> upstream/main
+
     };
     futures::executor::block_on(f)
 }

@@ -15,5 +15,5 @@ pub struct UserGroupName {
 pub struct NewAdminUserGroupName {
     pub username: String,
     pub group_name: String,
-    pub setter: String,
+    pub new_admin: String,
 }
