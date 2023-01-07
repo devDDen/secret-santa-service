@@ -4,6 +4,8 @@ use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
 use std::env;
 use tide::log;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 #[derive(Clone)]
 pub struct Database;
@@ -78,6 +80,44 @@ impl Database {
         }
     }
 
+    pub fn close_group(
+        &self,
+        username: &str,
+        group_name: &str,
+    ) -> Result<(), diesel::result::Error> {
+        log::debug!("Try to start secret Santa by {username} in group {group_name}");
+
+        let user = DB::get_user(username)?;
+        let mut group = DB::get_group(group_name)?;
+
+        let admin_member = DB::get_member(&user, &group)?;
+        if admin_member.urole != crate::models::Role::Admin || group.is_close {
+            return Err(diesel::result::Error::NotFound);
+        }
+
+        let mut members = DB::get_members(&group)?;
+        if members.len() < 2 {
+            return Err(diesel::result::Error::NotFound);
+        }
+        let mut rng = thread_rng();
+        members.shuffle(&mut rng);
+
+        let cur_santa = DB::get_user_from_member(members.get(members.len() - 1).unwrap())?;
+        let cur_recipient = DB::get_user_from_member(members.get(0).unwrap())?;
+        DB::set_santa(&group, &cur_santa, &cur_recipient)?;
+
+        for i in 0..members.len() - 1 {
+            let cur_santa = DB::get_user_from_member(members.get(i).unwrap())?;
+            let cur_recipient = DB::get_user_from_member(members.get(i + 1).unwrap())?;
+            DB::set_santa(&group, &cur_santa, &cur_recipient)?;            
+        }
+
+        group.is_close = true;
+        DB::update_group(&group)?;
+
+        Ok(())
+    }
+
     pub fn get_group_members(
         &self,
         username: &str,
@@ -102,6 +142,27 @@ impl Database {
                 Ok(users)
             }
             Role::Member => Err(diesel::result::Error::NotFound)
+        }
+    }
+    
+    pub fn add_admin_to_group(
+        &self,
+        username: &str,
+        new_admin: &str,
+        group_name: &str
+    ) -> Result<usize, diesel::result::Error> {
+        log::debug!("Creating user {new_admin} as admin in group {group_name}");
+        let group = DB::get_group(group_name)?;
+        let user_setter = DB::get_user(username)?;
+        let setter_member = DB::get_member(&user_setter, &group)?;
+        match setter_member.urole.eq(&Role::Admin) {
+            true => {
+                let user_new_admin = DB::get_user(new_admin)?;
+                let new_admin_member = DB::get_member(&user_new_admin, &group)?;
+                let changed_member = new_admin_member.set_role(Role::Admin);
+                DB::update_member(changed_member) 
+            }
+            false => Err(diesel::result::Error::NotFound)
         }
     }
 }
@@ -281,6 +342,16 @@ impl DB {
             .filter(urole.eq(Role::Admin))
             .count()
             .get_result(conn)
+    }
+
+    fn get_user_from_member(member: &Member) -> Result<User, diesel::result::Error> {
+        log::debug!("Try to find user from member {member:?}");
+        let conn = &mut DB::connect();
+
+        use crate::schema::users::dsl::*;
+        users
+            .filter(id.eq(member.user_id))
+            .first(conn)
     }
 
     fn set_santa(
