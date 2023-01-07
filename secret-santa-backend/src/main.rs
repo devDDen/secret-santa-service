@@ -129,8 +129,7 @@ fn main() -> Result<(), std::io::Error> {
                 let guard = state.lock().unwrap();
 
                 match guard.get_recipient_name(username.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!({"recipient": guard.get_recipient_name(username.as_str(), group_name.as_str())
-                    .expect("REASON").as_str()})),
+                    Ok(result) => Ok(json!({"recipient": result})),
                     Err(e) => Err(tide::Error::from_str(
                         tide::StatusCode::Conflict,
                         json!(e.to_string())
