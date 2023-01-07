@@ -67,7 +67,7 @@ impl Database {
         username: &str,
         group_name: &str,
     ) -> Result<(), diesel::result::Error> {
-        println!("Try to start secret Santa by {username} in group {group_name}");
+        log::debug!("Try to start secret Santa by {username} in group {group_name}");
 
         let user = DB::get_user(username)?;
         let mut group = DB::get_group(group_name)?;
@@ -306,7 +306,7 @@ impl DB {
     }
 
     fn get_user_from_member(member: &Member) -> Result<User, diesel::result::Error> {
-        println!("Try to find user from member {member:?}");
+        log::debug!("Try to find user from member {member:?}");
         let conn = &mut DB::connect();
 
         use crate::schema::users::dsl::*;
