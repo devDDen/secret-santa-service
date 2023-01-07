@@ -10,3 +10,10 @@ pub struct UserGroupName {
     pub username: String,
     pub group_name: String,
 }
+
+#[derive(Deserialize)]
+pub struct UserGroupNewAdminName {
+    pub username: String,
+    pub group_name: String,
+    pub new_admin: String,
+}
