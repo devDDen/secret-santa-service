@@ -43,6 +43,24 @@ impl Database {
         }
     }
 
+    pub fn get_recipient_name(
+        &self,
+        santa_name: &str,
+        group_name: &str,
+    ) -> Result<String, diesel::result::Error> {
+        log::debug!("Getting recipient for santa {santa_name} in group {group_name}");
+
+        let santa = DB::get_user(santa_name)?;
+        let group = DB::get_group(group_name)?;
+        match group.is_close {
+            true => {
+                let recipient = DB::get_santa_recipient(&group, &santa)?;
+                Ok(recipient.name)
+            }
+            false => Err(diesel::result::Error::NotFound)
+        }
+    }
+
     pub fn delete_group_by_admin(
         &self,
         username: &str,
@@ -117,7 +135,7 @@ impl Database {
 
                 let mut users = vec![];
                 for member in members {
-                    let user = DB::get_user_by_id(member.user_id)?;
+                    let user = DB::get_user_from_member(&member)?;
                     users.push(user.name);
                 }
 
@@ -188,16 +206,6 @@ impl DB {
 
         use crate::schema::users::dsl::*;
         users.filter(name.eq(username)).first(conn)
-    }
-
-    fn get_user_by_id(user_id: i32) -> Result<User, diesel::result::Error> {
-        log::debug!("Try to find user by id {user_id}");
-        let conn = &mut DB::connect();
-
-        use crate::schema::users::dsl::*;
-        users
-            .filter(id.eq(user_id))
-            .first(conn)
     }
 
     fn get_users() -> Result<Vec<User>, diesel::result::Error> {
