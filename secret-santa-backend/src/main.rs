@@ -109,7 +109,7 @@ fn main() -> Result<(), std::io::Error> {
                 let guard = state.lock().unwrap();
 
                 match guard.get_group_members(username.as_str(), group_name.as_str()) {
-                    Ok(list) => Ok(json!(&list)),
+                    Ok(list) => Ok(json!({group_name: list})),
                     Err(e) => Err(tide::Error::from_str(
                         tide::StatusCode::Conflict,
                         json!(e.to_string())
