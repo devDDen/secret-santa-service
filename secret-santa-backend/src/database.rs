@@ -147,6 +147,35 @@ impl Database {
             false => Err(diesel::result::Error::NotFound)
         }
     }
+    
+    pub fn revoke_rights_of_admin(
+        &self,
+        username: &str,
+        group_name: &str
+    ) -> Result<(), diesel::result::Error> {
+        let user = DB::get_user(username)?;
+        let group = DB::get_group(group_name)?;
+        let mut member = DB::get_member(&user, &group)?;
+        println!("Try to revoke rights by Admin of group {group_name}");
+
+        match member.urole.eq(&Role::Admin) {
+            true => {
+                let number_of_admins = DB::count_admins(&group)?;
+                if number_of_admins > 1 {
+                    member.urole = Role::Member;
+
+                    let conn = &mut DB::connect();
+                    use crate::schema::members::dsl::*;
+                    diesel::update(members.filter(id.eq(member.id))).set(member).execute(conn);
+                    Ok(())
+                }
+                else {
+                    Err(diesel::result::Error::NotFound)
+                }
+            }
+            false =>  Err(diesel::result::Error::NotFound)
+        }
+    }
 }
 
 struct DB;
