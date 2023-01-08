@@ -2,6 +2,7 @@ mod database;
 mod json_models;
 mod models;
 mod schema;
+mod errors;
 
 use crate::database::Database;
 use crate::json_models::*;
