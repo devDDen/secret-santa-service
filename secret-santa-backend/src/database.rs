@@ -8,6 +8,7 @@ use rand::{seq::SliceRandom, thread_rng};
 use serde_json::json;
 use std::env;
 use tide::{log, StatusCode};
+use std::iter::FromIterator;
 
 #[derive(Clone)]
 pub struct Database;
@@ -127,7 +128,7 @@ impl Database {
             false => Err(errors::error_method_not_allowed("Not enough rights".to_string())),
         }
     }
-
+    
     pub fn close_group(
         &self,
         username: &str,
@@ -281,11 +282,14 @@ impl Database {
     }
 }
 
+
+
 struct DB {
     conn: PgConnection
 }
 
 impl DB {
+
     fn connect() -> Self {
         log::debug!("Connect enter point");
         dotenv().ok();

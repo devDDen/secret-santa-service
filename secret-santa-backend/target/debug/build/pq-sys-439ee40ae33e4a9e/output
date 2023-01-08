@@ -1,0 +1,8 @@
+cargo:rerun-if-env-changed=PQ_LIB_STATIC
+cargo:rerun-if-env-changed=TARGET
+cargo:rerun-if-env-changed="PQ_LIB_DIR_X86_64_PC_WINDOWS_MSVC"
+"PQ_LIB_DIR_X86_64_PC_WINDOWS_MSVC" = Err(NotPresent)
+cargo:rerun-if-env-changed="PQ_LIB_DIR"
+"PQ_LIB_DIR" = Ok("C:\\Program Files\\PostgreSQL\\15\\lib")
+cargo:rustc-link-search=native=C:\Program Files\PostgreSQL\15\lib
+cargo:rustc-link-lib=dylib=libpq
