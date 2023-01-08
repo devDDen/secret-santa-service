@@ -160,7 +160,7 @@ impl Database {
         }
 
         let mut members = db.get_members(&group)?;
-        if members.len() < 2 {
+        if members.len() < 3 {
             return Err(crate::errors::error_method_not_allowed(
                 "Not enough count members".to_string(),
             ));
