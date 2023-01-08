@@ -1,0 +1,11 @@
+C:\Users\mikey\Downloads\rust\secret-santa-service\secret-santa-backend\target\debug\deps\futures_lite-a92c27a7f54fc1bb.rmeta: C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\lib.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\future.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\prelude.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\stream.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\io.rs
+
+C:\Users\mikey\Downloads\rust\secret-santa-service\secret-santa-backend\target\debug\deps\libfutures_lite-a92c27a7f54fc1bb.rlib: C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\lib.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\future.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\prelude.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\stream.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\io.rs
+
+C:\Users\mikey\Downloads\rust\secret-santa-service\secret-santa-backend\target\debug\deps\futures_lite-a92c27a7f54fc1bb.d: C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\lib.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\future.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\prelude.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\stream.rs C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\io.rs
+
+C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\lib.rs:
+C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\future.rs:
+C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\prelude.rs:
+C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\stream.rs:
+C:\Users\mikey\.cargo\registry\src\github.com-1ecc6299db9ec823\futures-lite-1.12.0\src\io.rs:
