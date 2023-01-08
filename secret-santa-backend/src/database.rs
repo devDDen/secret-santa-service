@@ -18,7 +18,7 @@ impl Database {
         let mut db = DB::connect();  
         db.create_user(username).map_err(|e| match e {
             DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
-                crate::errors::error_same_name()
+                crate::errors::error_same_name("User".to_string())
             }
             _ => crate::errors::error_internal_server(),
         })?;
@@ -37,7 +37,7 @@ impl Database {
             .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
         db.create_group(group_name).map_err(|e| match e {
             DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
-                crate::errors::error_same_name()
+                crate::errors::error_same_name("Group".to_string())
             }
             _ => crate::errors::error_bad_request("Error".to_string()),
         });
