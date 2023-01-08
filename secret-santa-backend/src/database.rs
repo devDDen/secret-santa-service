@@ -1,5 +1,5 @@
 use crate::errors;
-use crate::models::{Group, Member, NewGroup, NewMember, NewSanta, NewUser, Role, Santa, User};
+use crate::models::{User, NewUser, Group, NewGroup, Member, NewMember, Role, NewSanta};
 use diesel::prelude::*;
 use diesel::result::DatabaseErrorKind;
 use diesel::result::Error::DatabaseError;
