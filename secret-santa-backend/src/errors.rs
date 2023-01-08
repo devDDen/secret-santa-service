@@ -6,7 +6,7 @@ pub fn error_same_name(msg: String) -> tide::Error {
 }
 
 pub fn error_internal_server() -> tide::Error {
-    tide::Error::from_str(tide::StatusCode::InternalServerError, "Error")
+    tide::Error::from_str(tide::StatusCode::InternalServerError, "Internal error")
 }
 
 pub fn error_bad_request(message: String) -> tide::Error {

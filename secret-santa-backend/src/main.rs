@@ -8,7 +8,7 @@ use crate::database::Database;
 use crate::json_models::*;
 use serde_json::json;
 use std::sync::{Arc, RwLock};
-use tide::{Request, Response, StatusCode};
+use tide::{log, Request, Response, StatusCode};
 
 fn make_response_from_result(result: Result<String, tide::Error>) -> Response {
     match result {
@@ -20,7 +20,7 @@ fn make_response_from_result(result: Result<String, tide::Error>) -> Response {
         Err(e) => {
             let mut response = Response::new(e.status());
             let msg = e.into_inner().to_string();
-            tide::log::debug!("Error: {msg}");
+            log::debug!("Error: {msg}");
             response.set_body(json!({"error_message": msg}).to_string());
             response
         }
@@ -29,7 +29,7 @@ fn make_response_from_result(result: Result<String, tide::Error>) -> Response {
 
 fn main() -> Result<(), std::io::Error> {
     let version: &'static str = env!("CARGO_PKG_VERSION");
-    tide::log::with_level(tide::log::LevelFilter::Debug);
+    log::with_level(log::LevelFilter::Debug);
 
     let f = async {
         let database = Database;
