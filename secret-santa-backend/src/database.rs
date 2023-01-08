@@ -1,28 +1,28 @@
 use crate::errors;
 use crate::models::{User, NewUser, Group, NewGroup, Member, NewMember, Role, NewSanta};
 use diesel::prelude::*;
-use diesel::result::DatabaseErrorKind;
-use diesel::result::Error::DatabaseError;
+use diesel::result::{DatabaseErrorKind, Error::DatabaseError};
 use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use serde_json::json;
 use std::env;
-use tide::log;
+use tide::{log, StatusCode};
 
 #[derive(Clone)]
 pub struct Database;
 impl Database {
     pub fn create_user(&self, username: &str) -> Result<String, tide::Error> {
         let mut db = DB::connect();  
-        db.create_user(username).map_err(|e| match e {
-            DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
-                crate::errors::error_same_name("User".to_string())
-            }
-            _ => crate::errors::error_internal_server(),
-        })?;
-        Ok(json!(tide::StatusCode::Ok).to_string())
+        db.create_user(username)
+            .map_err(|e| match e {
+                DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
+                    errors::error_same_name("User".to_string())
+                }
+                _ => errors::error_internal_server(),
+            })?;
+        Ok(StatusCode::Ok.to_string())
     }
 
     pub fn create_group_by_user(
@@ -34,22 +34,24 @@ impl Database {
 
         let mut db = DB::connect();
         let user = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        db.create_group(group_name).map_err(|e| match e {
-            DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
-                crate::errors::error_same_name("Group".to_string())
-            }
-            _ => crate::errors::error_bad_request("Error".to_string()),
-        });
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        db.create_group(group_name)
+            .map_err(|e| match e {
+                DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
+                    errors::error_same_name("Group".to_string())
+                }
+                _ => errors::error_bad_request("Error".to_string()),
+            })?;
         let group = db.get_group(group_name)
-            .map_err(|e| crate::errors::error_bad_request("This group was not found".to_string()))?;
-        db.create_member(&user, &group, Role::Admin).map_err(|e| match e {
-            DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
-                crate::errors::error_same_name()
-            }
-            _ => crate::errors::error_internal_server(),
-        })?;
-        Ok(json!(tide::StatusCode::Ok).to_string())
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
+        db.create_member(&user, &group, Role::Admin)
+            .map_err(|e| match e {
+                DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
+                    errors::error_same_name("Member".to_string())
+                }
+                _ => errors::error_internal_server(),
+            })?;
+        Ok(StatusCode::Ok.to_string())
     }
 
     pub fn add_user_to_group(
@@ -61,22 +63,20 @@ impl Database {
 
         let mut db = DB::connect();
         let user = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
         match group.is_close {
-            true => Err(crate::errors::error_method_not_allowed(
-                "Group close".to_string(),
-            )),
+            true => Err(errors::error_method_not_allowed("Group close".to_string())),
             false => {
-                db.create_member(&user, &group, Role::Member).map_err(|e| match e {
-                    DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
-                        crate::errors::error_same_name()
-                    }
-                    _ => crate::errors::error_internal_server(),
-                })?;
-                Ok(json!(tide::StatusCode::Ok).to_string())
+                db.create_member(&user, &group, Role::Member)
+                    .map_err(|e| match e {
+                        DatabaseError(DatabaseErrorKind::UniqueViolation, _) => {
+                            errors::error_same_name("Member".to_string())
+                        }
+                        _ => errors::error_internal_server(),
+                    })?;
+                Ok(StatusCode::Ok.to_string())
             }
         }
     }
@@ -90,19 +90,16 @@ impl Database {
 
         let mut db = DB::connect();
         let santa = db.get_user(santa_name)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
         match group.is_close {
             true => {
                 let recipient = db.get_santa_recipient(&group, &santa)
-                    .map_err(|e| crate::errors::error_internal_server())?;
-                Ok(recipient.name)
+                    .map_err(|_| errors::error_internal_server())?;
+                Ok(json!({"recipient_name": recipient.name}).to_string())
             }
-            false => Err(crate::errors::error_too_early(
-                "It's too early to recognize Santa".to_string(),
-            )),
+            false => Err(errors::error_too_early("It's too early to recognize Santa".to_string())),
         }
     }
 
@@ -115,25 +112,20 @@ impl Database {
 
         let mut db = DB::connect();
         let user = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
-        let member = db.get_member(&user, &group).map_err(|e| {
-            crate::errors::error_bad_request("This member was not found in BD".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
+        let member = db.get_member(&user, &group)
+            .map_err(|_| errors::error_bad_request("This member was not found in BD".to_string()))?;
         match member.urole.eq(&Role::Admin) {
             true => {
-                let group_for_delete = db.get_group(group_name).map_err(|e| {
-                    crate::errors::error_bad_request("This group was not found".to_string())
-                })?;
+                let group_for_delete = db.get_group(group_name)
+                    .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
                 db.delete_group(group_for_delete)
-                    .map_err(|e| crate::errors::error_internal_server())?;
-                Ok(json!(tide::StatusCode::Ok).to_string())
+                    .map_err(|_| errors::error_internal_server())?;
+                Ok(StatusCode::Ok.to_string())
             }
-            false => Err(crate::errors::error_method_not_allowed(
-                "Not enough rights".to_string(),
-            )),
+            false => Err(errors::error_method_not_allowed("Not enough rights".to_string())),
         }
     }
 
@@ -146,90 +138,75 @@ impl Database {
 
         let mut db = DB::connect();
         let user = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let mut group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
-        let admin_member = db.get_member(&user, &group).map_err(|e| {
-            crate::errors::error_bad_request("This member was not found".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let mut group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
+        let admin_member = db.get_member(&user, &group)
+            .map_err(|_| errors::error_bad_request("This member was not found".to_string()))?;
         if admin_member.urole != crate::models::Role::Admin || group.is_close {
-            return Err(crate::errors::error_method_not_allowed(
-                "Not enough rights".to_string(),
-            ));
+            return Err(errors::error_method_not_allowed("Not enough rights".to_string()));
         }
 
         let mut members = db.get_members(&group)?;
         if members.len() < 3 {
-            return Err(crate::errors::error_method_not_allowed(
-                "Not enough count members".to_string(),
-            ));
+            return Err(errors::error_method_not_allowed("Not enough count members".to_string(),));
         }
         let mut rng = thread_rng();
         members.shuffle(&mut rng);
 
         let cur_santa = db.get_user_from_member(members.get(members.len() - 1).unwrap())
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
         let cur_recipient = db.get_user_from_member(members.get(0).unwrap())
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
         db.set_santa(&group, &cur_santa, &cur_recipient)
-            .map_err(|e| crate::errors::error_internal_server())?;
+            .map_err(|_| errors::error_internal_server())?;
 
         for i in 0..members.len() - 1 {
-            let cur_santa = db.get_user_from_member(members.get(i).unwrap()).map_err(|e| {
-                crate::errors::error_bad_request("This user was not found".to_string())
-            })?;
-            let cur_recipient =
-                db.get_user_from_member(members.get(i + 1).unwrap()).map_err(|e| {
-                    crate::errors::error_bad_request("This user was not found".to_string())
-                })?;
+            let cur_santa = db.get_user_from_member(members.get(i).unwrap())
+                .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+            let cur_recipient = db.get_user_from_member(members.get(i + 1).unwrap())
+                .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
             db.set_santa(&group, &cur_santa, &cur_recipient)
-                .map_err(|e| crate::errors::error_internal_server())?;
+                .map_err(|_| errors::error_internal_server())?;
         }
 
         group.is_close = true;
         db.update_group(&group)
-        .map_err(|e| crate::errors::error_internal_server())?;
+            .map_err(|_| errors::error_internal_server())?;
 
-        Ok(json!(tide::StatusCode::Ok).to_string())
+        Ok(StatusCode::Ok.to_string())
     }
 
     pub fn get_group_members(
         &self,
         username: &str,
         group_name: &str,
-    ) -> Result<Vec<String>, tide::Error> {
+    ) -> Result<String, tide::Error> {
         log::debug!("Getting members of group {group_name} by user {username}");
 
         let mut db = DB::connect();
         let user = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
-        let member = db.get_member(&user, &group).map_err(|e| {
-            crate::errors::error_bad_request("This member was not found".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
+        let member = db.get_member(&user, &group)
+            .map_err(|_| errors::error_bad_request("This member was not found".to_string()))?;
 
         match member.urole {
             Role::Admin => {
-                let members = db.get_members(&group).map_err(|e| {
-                    crate::errors::error_bad_request("This member was not found".to_string())
-                })?;
+                let members = db.get_members(&group)
+                    .map_err(|_| errors::error_bad_request("This member was not found".to_string()))?;
 
                 let mut users = vec![];
                 for member in members {
-                    let user = db.get_user_from_member(&member).map_err(|e| {
-                        crate::errors::error_bad_request("This user was not found".to_string())
-                    })?;
+                    let user = db.get_user_from_member(&member)
+                        .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
                     users.push(user.name);
                 }
 
-                Ok(users)
+                Ok(json!({group_name: users}).to_string())
             }
-            Role::Member => Err(crate::errors::error_method_not_allowed(
-                "Not enough right".to_string(),
-            )),
+            Role::Member => Err(errors::error_method_not_allowed("Not enough rights".to_string())),
         }
     }
 
@@ -242,30 +219,26 @@ impl Database {
 
         let mut db = DB::connect();
         let user = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
-        let member = db.get_member(&user, &group).map_err(|e| {
-            crate::errors::error_bad_request("This member was not found".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
+        let member = db.get_member(&user, &group)
+            .map_err(|_| errors::error_bad_request("This member was not found".to_string()))?;
         match member.urole.eq(&Role::Admin) {
             true => {
                 let number_of_admins = db.count_admins(&group)
-                    .map_err(|e| crate::errors::error_internal_server())?;
+                    .map_err(|_| errors::error_internal_server())?;
                 if number_of_admins > 1 {
                     let changed_member = member.set_role(Role::Member);
                     db.update_member(changed_member)
-                        .map_err(|e| crate::errors::error_internal_server())?;
-                    Ok(json!(tide::StatusCode::Ok).to_string())
+                        .map_err(|_| errors::error_internal_server())?;
+                    Ok(StatusCode::Ok.to_string())
                 }
                 else {
-                    Err(crate::errors::error_bad_request("Not enough admins".to_string()))
+                    Err(errors::error_bad_request("Not enough admins".to_string()))
                 }
             }
-            false => Err(crate::errors::error_method_not_allowed(
-                "Not enough right".to_string(),
-            )),
+            false => Err(errors::error_method_not_allowed("Not enough rights".to_string())),
         }
     }
 
@@ -278,38 +251,34 @@ impl Database {
         log::debug!("Creating user {new_admin} as admin in group {group_name}");
 
         let mut db = DB::connect();
-        let group = db.get_group(group_name).map_err(|e| {
-            crate::errors::error_bad_request("This group was not found".to_string())
-        })?;
+        let group = db.get_group(group_name)
+            .map_err(|_| errors::error_bad_request("This group was not found".to_string()))?;
         let user_setter = db.get_user(username)
-            .map_err(|e| crate::errors::error_bad_request("This user was not found".to_string()))?;
-        let setter_member = db.get_member(&user_setter, &group).map_err(|e| {
-            crate::errors::error_bad_request("This member was not found".to_string())
-        })?;
+            .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+        let setter_member = db.get_member(&user_setter, &group)
+            .map_err(|_| errors::error_bad_request("This member was not found".to_string()))?;
         match setter_member.urole.eq(&Role::Admin) {
             true => {
-                let user_new_admin = db.get_user(new_admin).map_err(|e| {
-                    crate::errors::error_bad_request("This user was not found".to_string())
-                })?;
-                let new_admin_member = db.get_member(&user_new_admin, &group).map_err(|e| {
-                    crate::errors::error_bad_request("This member was not found".to_string())
-                })?;
+                let user_new_admin = db.get_user(new_admin)
+                    .map_err(|_| errors::error_bad_request("This user was not found".to_string()))?;
+                let new_admin_member = db.get_member(&user_new_admin, &group)
+                    .map_err(|_| errors::error_bad_request("This member was not found".to_string()))?;
                 let changed_member = new_admin_member.set_role(Role::Admin);
                 db.update_member(changed_member)
-                    .map_err(|e| crate::errors::error_internal_server())?;
-                Ok(json!(tide::StatusCode::Ok).to_string())
+                    .map_err(|_| errors::error_internal_server())?;
+                Ok(StatusCode::Ok.to_string())
             }
-            false => Err(crate::errors::error_method_not_allowed(
-                "Not enough right".to_string(),
-            )),
+            false => Err(errors::error_method_not_allowed("Not enough rights".to_string())),
         }
     }
 
-    pub fn get_open_groups(&self) -> Result<Vec<Group>, diesel::result::Error> {
+    pub fn get_open_groups(&self) -> Result<String, tide::Error> {
         log::debug!("Getting list of opened groups");
 
         let mut db = DB::connect();
-        db.get_open_groups()
+        let groups = db.get_open_groups()
+            .map_err(|_| errors::error_internal_server())?;
+        Ok(json!({"groups": groups}).to_string())
     }
 }
 

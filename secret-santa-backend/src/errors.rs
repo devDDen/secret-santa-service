@@ -1,7 +1,7 @@
 pub fn error_same_name(msg: String) -> tide::Error {
     tide::Error::from_str(
         tide::StatusCode::Conflict,
-        "{msg} with the same name already exists",
+        format!("{msg} with the same name already exists"),
     )
 }
 

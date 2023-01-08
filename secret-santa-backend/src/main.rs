@@ -8,11 +8,28 @@ use crate::database::Database;
 use crate::json_models::*;
 use serde_json::json;
 use std::sync::{Arc, RwLock};
-use tide::Request;
+use tide::{Request, Response, StatusCode};
+
+fn make_response_from_result(result: Result<String, tide::Error>) -> Response {
+    match result {
+        Ok(s) => {
+            let mut response = Response::new(StatusCode::Ok);
+            response.set_body(s);
+            response
+        }
+        Err(e) => {
+            let mut response = Response::new(e.status());
+            let msg = e.into_inner().to_string();
+            tide::log::debug!("Error: {msg}");
+            response.set_body(json!({"error_message": msg}).to_string());
+            response
+        }
+    }
+}
 
 fn main() -> Result<(), std::io::Error> {
     let version: &'static str = env!("CARGO_PKG_VERSION");
-    tide::log::start();
+    tide::log::with_level(tide::log::LevelFilter::Debug);
 
     let f = async {
         let database = Database;
@@ -23,194 +40,183 @@ fn main() -> Result<(), std::io::Error> {
             .get(move |_| async move { Ok(format!("version: {version}")) });
         app.at("/registr-user")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let Username { username } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let Username { username } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.create_user(username.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.create_user(username.as_str())
+                ))
             });
         app.at("/create-group")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.create_group_by_user(username.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.create_group_by_user(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/join-group")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.add_user_to_group(username.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.add_user_to_group(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/delete-group")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.delete_group_by_admin(username.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::NotFound,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.delete_group_by_admin(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/group-members")
             .get(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.read().unwrap();
 
-                match guard.get_group_members(username.as_str(), group_name.as_str()) {
-                    Ok(list) => Ok(json!({group_name: list})),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string())
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.get_group_members(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/get-recipient-name")
             .get(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.read().unwrap();
 
-                match guard.get_recipient_name(username.as_str(), group_name.as_str()) {
-                    Ok(result) => Ok(json!({"recipient": result})),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string())
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.get_recipient_name(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/add-admin")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupNewAdminName {
-                    username,
-                    group_name,
-                    new_admin,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupNewAdminName { username, group_name, new_admin } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.add_admin_to_group(username.as_str(), new_admin.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.add_admin_to_group(username.as_str(), new_admin.as_str(), group_name.as_str())
+                ))
             });
         app.at("/start-secret-santa")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.close_group(username.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.close_group(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/revoke-admin-rights")
             .post(|mut request: Request<Arc<RwLock<Database>>>| async move {
-                let UserGroupName {
-                    username,
-                    group_name,
-                } = request.body_json().await.map_err(|e| {
-                    tide::Error::from_str(tide::StatusCode::BadRequest, json!(e.to_string()))
-                })?;
+                let jreq = request.body_json().await;
+                let UserGroupName { username, group_name } = match jreq {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Ok(make_response_from_result(
+                            Err(errors::error_bad_request("Incorect request".to_string()))
+                        ))
+                    }
+                };
 
                 let state = request.state();
                 let guard = state.write().unwrap();
 
-                match guard.revoke_rights_of_admin(username.as_str(), group_name.as_str()) {
-                    Ok(_) => Ok(json!(tide::StatusCode::Ok)),
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.revoke_rights_of_admin(username.as_str(), group_name.as_str())
+                ))
             });
         app.at("/get-groups")
             .get(|request: Request<Arc<RwLock<Database>>>| async move {
                 let state = request.state();
                 let guard = state.read().unwrap();
 
-                match guard.get_open_groups() {
-                    Ok(v) => Ok(json!({"groups": v})),   
-                    Err(e) => Err(tide::Error::from_str(
-                        tide::StatusCode::Conflict,
-                        json!(e.to_string()),
-                    )),
-                }
+                Ok(make_response_from_result(
+                    guard.get_open_groups()
+                ))
             });
         app.listen("127.0.0.1:80").await
     };
