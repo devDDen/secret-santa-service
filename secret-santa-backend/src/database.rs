@@ -153,12 +153,13 @@ impl Database {
         let mut rng = thread_rng();
         members.shuffle(&mut rng);
 
-        mut cur_santa = db.get_user_from_member(members.get(members.len() - 1).unwrap())
+        let mut cur_santa = db.get_user_from_member(members.get(members.len() - 1).unwrap())
             .map_err(|_| errors::error_internal_server())?;
-        mut cur_recipient = db.get_user_from_member(members.get(0).unwrap())
+        let mut cur_recipient = db.get_user_from_member(members.get(0).unwrap())
             .map_err(|_| errors::error_internal_server())?;
         db.set_santa(&group, &cur_santa, &cur_recipient)
             .map_err(|_| errors::error_internal_server())?;
+
         cur_santa = cur_recipient;
         for i in 1..members.len() - 1 {  
             cur_recipient = db.get_user_from_member(members.get(i).unwrap())
