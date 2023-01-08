@@ -1,3 +1,0 @@
-cargo:rerun-if-changed=build/main.rs
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=C:\Users\mikey\Downloads\rust\secret-santa-service\secret-santa-backend\target\debug\build\typenum-f9768ee51e0666e9\out\consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=C:\Users\mikey\Downloads\rust\secret-santa-service\secret-santa-backend\target\debug\build\typenum-f9768ee51e0666e9\out\op.rs
